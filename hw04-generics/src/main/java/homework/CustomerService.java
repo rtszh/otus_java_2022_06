@@ -1,14 +1,11 @@
 package homework;
 
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class CustomerService {
 
-    private TreeMap<Customer, String> map;
+    private SortedMap<Customer, String> map;
     private Iterator iterator;
 
     public CustomerService() {
