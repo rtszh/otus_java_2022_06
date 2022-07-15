@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${Versions.jupiterApi}")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:${Versions.jupiterEngine}")
+    testImplementation("org.assertj:assertj-core:${Versions.assertjCore}")
+    testImplementation("org.mockito:mockito-core:${Versions.mockitoCore}")
+    testImplementation("org.mockito:mockito-junit-jupiter:${Versions.junitJupiter}")
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.with {
+        encoding = 'UTF-8'
+    }
+}
