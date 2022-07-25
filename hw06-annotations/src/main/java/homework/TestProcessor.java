@@ -62,37 +62,38 @@ public class TestProcessor<T> {
                     var testFlags = new TestFlags();
                     testMethods
                             .forEach(method -> {
+                                if (checkBeforeAnnotation(method)) {
                                     try {
-                                        if (checkBeforeAnnotation(method)) {
-                                            method.invoke(instance);
-                                        } else if (testFlags.getBeforeFlag() && checkTestAnnotation(method)) {
-                                            try {
-                                                System.out.println(method.getName() + ": Starting test");
-                                                method.invoke(instance);
-                                                System.out.println(method.getName() + ": Test passed");
-                                            } catch (Exception e) {
-                                                System.out.println(method.getName() + ": Test failed");
-                                                statistics.incrementFailedTests();
-                                                testFlags.setTestFlagFalse();
-                                            }
-                                        } else if (testFlags.getBeforeFlag() && checkAfterAnnotation(method)) {
-                                            try {
-                                                method.invoke(instance);
-                                                if (testFlags.getTestFlag()) {
-                                                    statistics.incrementPassedTests();
-                                                }
-                                            } catch (Exception e) {
-                                                System.out.println(method.getName() + ": @After method failed");
-                                                if (testFlags.getTestFlag()) {
-                                                    statistics.incrementFailedTests();
-                                                }
-                                            }
-                                        }
+                                        method.invoke(instance);
                                     } catch (Exception e) {
                                         System.out.println(method.getName() + ": @Before method failed");
                                         statistics.incrementFailedTests();
                                         testFlags.setBeforeFlagFalse();
+                                        testFlags.setTestFlagFalse();
                                     }
+                                } else if (testFlags.getBeforeFlag() && checkTestAnnotation(method)) {
+                                    try {
+                                        System.out.println(method.getName() + ": Starting test");
+                                        method.invoke(instance);
+                                        System.out.println(method.getName() + ": Test passed");
+                                    } catch (Exception e) {
+                                        System.out.println(method.getName() + ": Test failed");
+                                        statistics.incrementFailedTests();
+                                        testFlags.setTestFlagFalse();
+                                    }
+                                } else if (checkAfterAnnotation(method)) {
+                                    try {
+                                        method.invoke(instance);
+                                        if (testFlags.getTestFlag()) {
+                                            statistics.incrementPassedTests();
+                                        }
+                                    } catch (Exception e) {
+                                        System.out.println(method.getName() + ": @After method failed");
+                                        if (testFlags.getTestFlag()) {
+                                            statistics.incrementFailedTests();
+                                        }
+                                    }
+                                }
                             });
                 });
 
