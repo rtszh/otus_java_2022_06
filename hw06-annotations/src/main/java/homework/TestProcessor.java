@@ -31,9 +31,7 @@ public class TestProcessor<T> {
 
     public void startTest() {
 
-        /**
-         * Для каждого метода определяем перечень всех его аннотаций
-         */
+        // Для каждого метода определяем перечень всех его аннотаций
         final Map<Method, Annotation[]> methodMap = Arrays.stream(methods)
                 .collect(Collectors.toMap(
                                 Function.identity(),
@@ -41,10 +39,7 @@ public class TestProcessor<T> {
                         )
                 );
 
-        /**
-         * Оставляем только аннотации из testAnnotations
-         */
-
+        // Оставляем только аннотации из testAnnotations
         final Map<Method, List<Annotation>> filteredMethodMap = new HashMap<>();
         methodMap.forEach((key, value) -> {
 
@@ -55,48 +50,53 @@ public class TestProcessor<T> {
             filteredMethodMap.put(key, filteredAnnotations);
         });
 
-        /** Формируем тройки before-test-after
-         *
-         */
-
+        // Формируем тройки before-test-after
         final List<List<Method>> testList = buildTestList(filteredMethodMap);
 
-        /**
-         * Запускаем тесты
-         */
-
+        // Запускаем тесты
         final Statistics statistics = new Statistics();
 
         testList
                 .forEach(testMethods -> {
                     var instance = createNewInstance();
+                    var testFlags = new TestFlags();
                     testMethods
                             .forEach(method -> {
-                                try {
-                                    boolean isTest = checkTestAnnotation(method);
-                                    if (isTest) {
-                                        System.out.println(method.getName() + ": Starting test");
+                                    try {
+                                        if (checkBeforeAnnotation(method)) {
+                                            method.invoke(instance);
+                                        } else if (testFlags.getBeforeFlag() && checkTestAnnotation(method)) {
+                                            try {
+                                                System.out.println(method.getName() + ": Starting test");
+                                                method.invoke(instance);
+                                                System.out.println(method.getName() + ": Test passed");
+                                            } catch (Exception e) {
+                                                System.out.println(method.getName() + ": Test failed");
+                                                statistics.incrementFailedTests();
+                                                testFlags.setTestFlagFalse();
+                                            }
+                                        } else if (testFlags.getBeforeFlag() && checkAfterAnnotation(method)) {
+                                            try {
+                                                method.invoke(instance);
+                                                if (testFlags.getTestFlag()) {
+                                                    statistics.incrementPassedTests();
+                                                }
+                                            } catch (Exception e) {
+                                                System.out.println(method.getName() + ": @After method failed");
+                                                if (testFlags.getTestFlag()) {
+                                                    statistics.incrementFailedTests();
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        System.out.println(method.getName() + ": @Before method failed");
+                                        statistics.incrementFailedTests();
+                                        testFlags.setBeforeFlagFalse();
                                     }
-                                    method.invoke(instance);
-                                    if (isTest) {
-                                        System.out.println(method.getName() + ": Test passed");
-                                        statistics.setPassedTests(statistics.getPassedTests() + 1);
-                                    }
-                                } catch (Exception e) {
-                                    System.out.println(method.getName() + ": Test failed");
-                                    statistics.setFailedTests(statistics.getFailedTests() + 1);
-                                }
                             });
                 });
 
-        statistics.setSumTests(
-                statistics.getPassedTests() +
-                        statistics.getFailedTests()
-        );
-
-        /**
-         * Вывод статистики по тестам
-         */
+        // Вывод статистики по тестам
         System.out.println("Total tests: " + statistics.getSumTests());
         System.out.println("Tests passed: " + statistics.getPassedTests());
         System.out.println("Tests failed: " + statistics.getFailedTests());
@@ -111,6 +111,24 @@ public class TestProcessor<T> {
 
     }
 
+    private boolean checkBeforeAnnotation(Method method) {
+        final var annotationTypeList = Arrays.stream(method.getAnnotations())
+                .map(Annotation::annotationType)
+                .collect(Collectors.toSet());
+
+        return annotationTypeList.contains(Before.class);
+
+    }
+
+    private boolean checkAfterAnnotation(Method method) {
+        final var annotationTypeList = Arrays.stream(method.getAnnotations())
+                .map(Annotation::annotationType)
+                .collect(Collectors.toSet());
+
+        return annotationTypeList.contains(After.class);
+
+    }
+
     private T createNewInstance() {
         T result = null;
         try {
@@ -122,9 +140,8 @@ public class TestProcessor<T> {
     }
 
     private List<List<Method>> buildTestList(Map<Method, List<Annotation>> filteredMethodMap) {
-        /**
-         * Заполняем списки методов, у которых есть аннотация Before, After и Test
-         */
+
+        // Заполняем списки методов, у которых есть аннотация Before, After и Test
         List<Method> listMethodsWithBeforeAnnotation = new ArrayList<>();
         List<Method> listMethodsWithAfterAnnotation = new ArrayList<>();
         List<Method> listMethodsWithTestAnnotation = new ArrayList<>();

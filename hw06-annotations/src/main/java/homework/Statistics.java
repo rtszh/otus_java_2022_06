@@ -5,27 +5,26 @@ public class Statistics {
     private int failedTests;
     private int sumTests;
 
-    public int getPassedTests() {
-        return passedTests;
+    public void incrementPassedTests() {
+        passedTests++;
+        sumTests++;
     }
 
-    public void setPassedTests(int passedTests) {
-        this.passedTests = passedTests;
+    public void incrementFailedTests() {
+        failedTests++;
+        sumTests++;
+    }
+
+    public int getPassedTests() {
+        return passedTests;
     }
 
     public int getFailedTests() {
         return failedTests;
     }
 
-    public void setFailedTests(int failedTests) {
-        this.failedTests = failedTests;
-    }
-
     public int getSumTests() {
         return sumTests;
     }
 
-    public void setSumTests(int sumTests) {
-        this.sumTests = sumTests;
-    }
 }

@@ -4,8 +4,12 @@ public class TestRunner {
     public static void main(String[] args) throws Exception {
         final var testClass1 = TestList.class;
         final var testClass2 = TestList2.class;
+        final var testClass3 = TestList3.class;
+        final var testClass4 = TestList4.class;
         runTest(testClass1);
         runTest(testClass2);
+        runTest(testClass3);
+        runTest(testClass4);
     }
 
     private static void runTest(Class<?> testClass) throws Exception {
