@@ -15,28 +15,26 @@ import java.util.stream.Collectors;
 
 public class TestProcessor<T> {
 
-    private static Set<Class> testAnnotations = Set.of(
+    private final Set<Class> testAnnotations = Set.of(
             Before.class,
             After.class,
             Test.class
     );
 
-    Class<T> clazz;
-    Method[] methods;
-    Constructor<T> constructor;
+    private final Method[] methods;
+    private final Constructor<T> constructor;
 
     public TestProcessor(Class<T> clazz) throws Exception {
-        this.clazz = clazz;
         this.methods = clazz.getDeclaredMethods();
         this.constructor = clazz.getConstructor();
     }
 
-    public void startTest() throws NoSuchMethodException, Exception {
+    public void startTest() {
 
         /**
          * Для каждого метода определяем перечень всех его аннотаций
          */
-        Map<Method, Annotation[]> methodMap = Arrays.stream(methods)
+        final Map<Method, Annotation[]> methodMap = Arrays.stream(methods)
                 .collect(Collectors.toMap(
                                 Function.identity(),
                                 Method::getAnnotations
@@ -47,11 +45,11 @@ public class TestProcessor<T> {
          * Оставляем только аннотации из testAnnotations
          */
 
-        Map<Method, List<Annotation>> filteredMethodMap = new HashMap<>();
+        final Map<Method, List<Annotation>> filteredMethodMap = new HashMap<>();
         methodMap.forEach((key, value) -> {
 
             List<Annotation> filteredAnnotations = Arrays.stream(value)
-                    .filter(anno -> testAnnotations.contains(anno.annotationType()))
+                    .filter(annotation -> testAnnotations.contains(annotation.annotationType()))
                     .collect(Collectors.toList());
 
             filteredMethodMap.put(key, filteredAnnotations);
@@ -61,18 +59,18 @@ public class TestProcessor<T> {
          *
          */
 
-        List<List<Method>> testList = buildTestList(filteredMethodMap);
+        final List<List<Method>> testList = buildTestList(filteredMethodMap);
 
         /**
          * Запускаем тесты
          */
 
-        Statistics statistics = new Statistics();
+        final Statistics statistics = new Statistics();
 
-        testList.stream()
+        testList
                 .forEach(testMethods -> {
                     var instance = createNewInstance();
-                    testMethods.stream()
+                    testMethods
                             .forEach(method -> {
                                 try {
                                     boolean isTest = checkTestAnnotation(method);
@@ -105,8 +103,8 @@ public class TestProcessor<T> {
     }
 
     private boolean checkTestAnnotation(Method method) {
-        var annotationTypeList = Arrays.stream(method.getAnnotations())
-                .map(annotation -> annotation.annotationType())
+        final var annotationTypeList = Arrays.stream(method.getAnnotations())
+                .map(Annotation::annotationType)
                 .collect(Collectors.toSet());
 
         return annotationTypeList.contains(Test.class);
@@ -117,18 +115,14 @@ public class TestProcessor<T> {
         T result = null;
         try {
             result = constructor.newInstance();
-        } catch (InstantiationException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
+//        } catch (IllegalAccessException e) {
+//            e.printStackTrace();
+//        } catch (InvocationTargetException e) {
+//            e.printStackTrace();
         }
         return result;
-    }
-
-    private void methodInvoke(Method method, Object obj) throws Exception {
-        method.invoke(obj);
     }
 
     private List<List<Method>> buildTestList(Map<Method, List<Annotation>> filteredMethodMap) {
@@ -140,7 +134,7 @@ public class TestProcessor<T> {
         List<Method> listMethodsWithTestAnnotation = new ArrayList<>();
         filteredMethodMap.forEach((key, value) -> {
             var annotationTypeList = value.stream()
-                    .map(annotation -> annotation.annotationType())
+                    .map(Annotation::annotationType)
                     .collect(Collectors.toList());
 
             if (annotationTypeList.contains(Before.class)) {
@@ -156,7 +150,7 @@ public class TestProcessor<T> {
             }
         });
 
-        List<List<Method>> result = listMethodsWithTestAnnotation.stream()
+        return listMethodsWithTestAnnotation.stream()
                 .map(method -> {
                     List<Method> resultList = new ArrayList<>();
                     resultList.addAll(listMethodsWithBeforeAnnotation);
@@ -165,7 +159,5 @@ public class TestProcessor<T> {
                     return resultList;
                 })
                 .collect(Collectors.toList());
-
-        return result;
     }
 }
