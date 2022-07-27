@@ -1,0 +1,25 @@
+Результаты без изменения кода
+
+VM option : Result
+Xmx256m : Out of memory exception
+Xmx512m : spend msec:24550, sec:24
+Xmx768m : spend msec:23389, sec:23
+Xmx1024m : spend msec:21208, sec:21
+Xmx1280m : spend msec:21392, sec:21
+Xmx1536m : spend msec:21102, sec:21
+Xmx2048m : spend msec:21325, sec:21
+
+Вывод - параметр Xmx1024m является оптимальным. Дальнейшее увеличение heap'а не ускоряет работу приложения
+
+Результаты после изменения кода:
+Xmx256m : spend msec:6261, sec:6, spend msec:5481, sec:5
+Xmx512m : spend msec:5399, sec:5, spend msec:4783, sec:4
+Xmx768m : spend msec:4283, sec:4, spend msec:3702, sec:3
+Xmx1024m : spend msec:4211, sec:4
+Xmx1280m : spend msec:4036, sec:4
+Xmx1536m : spend msec:4933, sec:4, spend msec:3446, sec:3, spend msec:4476, sec:4
+Xmx2048m : spend msec:5616, sec:5
+
+Вывод - после замены Integer на int работа приложения ускорилась примерно в 4 раза.
+Параметр Xmx768m является оптимальным. Дальнейшее увеличение heap'а не ускоряет работу приложения
+
